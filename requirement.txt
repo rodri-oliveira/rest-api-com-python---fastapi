@@ -1,0 +1,21 @@
+# FastAPI: framework principal para criar APIs rápidas e modernas
+fastapi
+
+# Uvicorn: servidor ASGI recomendado para rodar aplicações FastAPI
+uvicorn
+
+# SQLAlchemy: ORM para manipulação de bancos de dados relacionais
+sqlalchemy
+
+# Passlib com suporte a bcrypt: para hash e verificação de senhas de forma segura
+passlib[bcrypt]
+
+# python-jose com cryptography: para autenticação JWT e operações com tokens
+python-jose[cryptography]
+
+# python-dotenv: para ler variáveis de ambiente de arquivos .env
+python-dotenv
+
+# python-multipart: para suportar upload de arquivos em requisições
+python-multipart
+

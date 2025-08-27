@@ -3,7 +3,7 @@ from sqlalchemy.orm import declarative_base
 from enum import Enum
 from sqlalchemy import Enum as SqlEnum
 
-db = create_engine("sqlite:///:database/database.db")
+db = create_engine("sqlite:///database/database.db")
 Base = declarative_base()
 
 class StatusPedido(Enum):

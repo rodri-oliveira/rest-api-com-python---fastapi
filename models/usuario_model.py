@@ -4,7 +4,7 @@ from sqlalchemy import Column, Integer, String, Boolean
 class Usuario(Base):
     __tablename__ = "usuarios"
 
-    id = Column("id", Integer, primary_key=True, autoincrement=True)
+    usuario_id = Column("id", Integer, primary_key=True, autoincrement=True)
     nome = Column("nome", String)
     email = Column("email", String, nullable=False, unique=True)
     senha = Column("senha", String)

@@ -1,13 +1,12 @@
 from fastapi import APIRouter, Depends
 from database.dependencies import get_session
 from models.usuario_model import Usuario
-from sqlalchemy import create_engine
+from services.auth_service import user_auth
 from utils.security import bcrypt_context
 from schemas.usuario_schema import UsuarioSchema
 from sqlalchemy.orm import Session
 from schemas.login_schema import LoginSchema
-from jose import JWTError, jwt
-from datetime import datetime, timedelta
+from jose import jwt
 from utils.security import create_access_token
 from fastapi import HTTPException
 
@@ -41,9 +40,9 @@ async def login(login_schema: LoginSchema, session: Session = Depends(get_sessio
     """
     Essa rota faz login no sistema
     """
-    usuario = session.query(Usuario).filter(Usuario.email==login_schema.email).first()
-    if not usuario or not bcrypt_context.verify(login_schema.senha, usuario.senha):
-        raise HTTPException(status_code=401, detail="Email ou senha invalidos")
+    usuario = user_auth(login_schema.email, login_schema.senha, session)
+    if not usuario:
+        raise HTTPException(status_code=401, detail="Email ou senha invalidos ou usuario não encontrado.")
     else:
         token_data = {"sub": usuario.email}
         acess_token = create_access_token(token_data)

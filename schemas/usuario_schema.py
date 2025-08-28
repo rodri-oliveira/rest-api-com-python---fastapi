@@ -9,4 +9,4 @@ class UsuarioSchema(BaseModel):
     admin: Optional[bool] = False
 
     class Config:
-        orm_mode = True
+       from_attributes = True

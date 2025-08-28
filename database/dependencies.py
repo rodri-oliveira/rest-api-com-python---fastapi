@@ -1,4 +1,4 @@
-from models.models import db
+from database.connection import db
 from sqlalchemy.orm import sessionmaker
 
 def get_session():

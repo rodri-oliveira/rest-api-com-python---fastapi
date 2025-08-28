@@ -1,8 +1,10 @@
 from fastapi import APIRouter, Depends
 from database.dependencies import get_session
-from models.models import Usuario
+from models.usuario_model import Usuario
 from sqlalchemy import create_engine
 from utils.security import bcrypt_context
+from schemas.usuario_schema import UsuarioSchema
+from sqlalchemy.orm import Session
 
 auth_router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -14,16 +16,16 @@ async def home():
     return {"Mendagem": "Voce acessou a de autenticação.", "autenticado": False}
 
 @auth_router.post("/create_acount")
-async def create_acount(email: str, senha: str, nome: str, session = Depends(get_session)):
+async def create_acount(usuario_schema: UsuarioSchema, session: Session = Depends(get_session)):
     """
     Essa rota cria uma conta no sistema
     """
-    senha_criptografada = bcrypt_context.hash(senha)
-    usuario = session.query(Usuario).filter(Usuario.email==email).first()
+    senha_criptografada = bcrypt_context.hash(usuario_schema.senha)
+    usuario = session.query(Usuario).filter(Usuario.email==usuario_schema.email).first()
     if usuario:
         return {"mensagem": "Usuario ja existe."}
     else:
-        novo_usuario = Usuario(nome, email, senha_criptografada, ativo=True)
+        novo_usuario = Usuario(usuario_schema.nome, usuario_schema.email, senha_criptografada, usuario_schema.ativo, usuario_schema.admin)
         session.add(novo_usuario)
         session.commit()
-        return {"mensagem": "Usuario criado com sucesso."}
+        return {"mensagem": f"Usuario {usuario_schema.nome} criado com sucesso.", "email": usuario_schema.email}

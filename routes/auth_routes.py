@@ -5,9 +5,15 @@ from sqlalchemy import create_engine
 from utils.security import bcrypt_context
 from schemas.usuario_schema import UsuarioSchema
 from sqlalchemy.orm import Session
+from schemas.login_schema import LoginSchema
+from jose import JWTError, jwt
+from datetime import datetime, timedelta
+from utils.security import create_access_token
+from fastapi import HTTPException
 
 auth_router = APIRouter(prefix="/auth", tags=["auth"])
 
+    
 @auth_router.get("/")
 async def home():
     """
@@ -29,3 +35,16 @@ async def create_acount(usuario_schema: UsuarioSchema, session: Session = Depend
         session.add(novo_usuario)
         session.commit()
         return {"mensagem": f"Usuario {usuario_schema.nome} criado com sucesso.", "email": usuario_schema.email}
+
+@auth_router.post("/login")
+async def login(login_schema: LoginSchema, session: Session = Depends(get_session)):
+    """
+    Essa rota faz login no sistema
+    """
+    usuario = session.query(Usuario).filter(Usuario.email==login_schema.email).first()
+    if not usuario or not bcrypt_context.verify(login_schema.senha, usuario.senha):
+        raise HTTPException(status_code=401, detail="Email ou senha invalidos")
+    else:
+        token_data = {"sub": usuario.email}
+        acess_token = create_access_token(token_data)
+        return {"acess_token": acess_token, "token_type": "bearer"}

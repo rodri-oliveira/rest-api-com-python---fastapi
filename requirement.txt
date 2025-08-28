@@ -19,3 +19,5 @@ python-dotenv
 # python-multipart: para suportar upload de arquivos em requisições
 python-multipart
 
+bcrypt==3.2.0
+

@@ -1,23 +1,35 @@
 # FastAPI: framework principal para criar APIs rápidas e modernas
-fastapi
+fastapi>=0.110
 
 # Uvicorn: servidor ASGI recomendado para rodar aplicações FastAPI
-uvicorn
+uvicorn[standard]>=0.27
 
 # SQLAlchemy: ORM para manipulação de bancos de dados relacionais
-sqlalchemy
+SQLAlchemy>=2.0
+
+# Alembic: migrações de banco de dados
+alembic>=1.12
 
 # Passlib com suporte a bcrypt: para hash e verificação de senhas de forma segura
-passlib[bcrypt]
+passlib[bcrypt]>=1.7.4
 
 # python-jose com cryptography: para autenticação JWT e operações com tokens
-python-jose[cryptography]
+python-jose[cryptography]>=3.3.0
+cryptography>=41.0.0
 
 # python-dotenv: para ler variáveis de ambiente de arquivos .env
-python-dotenv
+python-dotenv>=1.0.0
 
 # python-multipart: para suportar upload de arquivos em requisições
-python-multipart
+python-multipart>=0.0.9
 
-bcrypt==3.2.0
+# pydantic (v2) e núcleo
+pydantic>=2.6
+pydantic-core>=2.16
+
+# Dependências relacionadas ao ASGI/Starlette
+starlette>=0.36
+
+# Requisitos auxiliares
+greenlet>=3.0
 

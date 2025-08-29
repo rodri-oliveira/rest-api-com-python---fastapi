@@ -1,15 +1,15 @@
 from database.connection import db
 from sqlalchemy.orm import sessionmaker, Session
 from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import jwt, JWTError
 from utils.security import SECRET_KEY, ALGORITHM
 from models.usuario_model import Usuario
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
-# Scheme dedicado para refresh via Bearer
-oauth2_refresh_scheme = OAuth2PasswordBearer(tokenUrl="/auth/refresh_token")
+# Esquemas HTTP Bearer para o Swagger mostrar campo de colar token
+http_bearer_access = HTTPBearer(scheme_name="AccessToken")
+http_bearer_refresh = HTTPBearer(scheme_name="RefreshToken")
 
 
 def get_session():
@@ -37,10 +37,10 @@ def get_token_payload(token: str) -> dict:
 
 
 def get_current_user(
-    token: str = Depends(oauth2_scheme),
+    token: HTTPAuthorizationCredentials = Depends(http_bearer_access),
     session: Session = Depends(get_session),
 ):
-    payload = get_token_payload(token)
+    payload = get_token_payload(token.credentials)
     if payload.get("type") != "access":
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token invalido.", headers={"WWW-Authenticate": "Bearer"})
 
@@ -65,9 +65,9 @@ def verify_refresh_token(refresh_token: str):
     return payload
 
 
-def verify_refresh_bearer(token: str = Depends(oauth2_refresh_scheme)):
+def verify_refresh_bearer(token: HTTPAuthorizationCredentials = Depends(http_bearer_refresh)):
     """Valida refresh token lido do header Authorization: Bearer."""
-    payload = verify_token(token)
+    payload = verify_token(token.credentials)
     if not payload or payload.get("type") != "refresh":
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token invalido.", headers={"WWW-Authenticate": "Bearer"})
     return payload

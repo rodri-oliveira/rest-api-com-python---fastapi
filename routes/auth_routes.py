@@ -50,6 +50,10 @@ async def login(login_schema: LoginSchema, session: Session = Depends(get_sessio
 
 @auth_router.post("/refresh_token")
 async def refresh_token(payload: dict = Depends(verify_refresh_bearer), session: Session = Depends(get_session)):
+    """
+    Essa rota faz refresh no token.
+    Envie o refresh token no header Authorization: Bearer (use o botão Authorize → RefreshToken).
+    """
     user_id = payload.get("sub")
     try:
         user_id = int(user_id)

@@ -2,13 +2,12 @@ from fastapi import APIRouter, Depends
 from database.dependencies import get_session
 from models.usuario_model import Usuario
 from services.auth_service import user_auth
-from utils.security import bcrypt_context
+from utils.security import bcrypt_context, create_access_token, create_refresh_token
 from schemas.usuario_schema import UsuarioSchema
 from sqlalchemy.orm import Session
 from schemas.login_schema import LoginSchema
-from jose import jwt
-from utils.security import create_access_token
 from fastapi import HTTPException
+from utils.security import verify_token
 
 auth_router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -46,4 +45,21 @@ async def login(login_schema: LoginSchema, session: Session = Depends(get_sessio
     else:
         token_data = {"sub": usuario.email}
         acess_token = create_access_token(token_data)
-        return {"acess_token": acess_token, "token_type": "bearer"}
+        refresh_token = create_refresh_token(token_data)
+        return {"access_token": acess_token, "refresh_token": refresh_token, "token_type": "bearer"}
+
+@auth_router.post("/refresh_token")
+async def refresh_token(refresh_token: str, session: Session = Depends(get_session)):
+    payload = verify_token(refresh_token)
+    if not payload or payload.get("type") != "refresh":
+        raise HTTPException(status_code=401, detail="Token invalido.")
+
+    email = payload.get("sub")
+    usuario = session.query(Usuario).filter(Usuario.email == email).first()
+    if not usuario:
+        raise HTTPException(status_code=401, detail="Email ou senha invalidos ou usuario não encontrado.")
+
+    token_data = {"sub": usuario.email}
+    acess_token = create_access_token(token_data)
+    new_refresh_token = create_refresh_token(token_data)
+    return {"access_token": acess_token, "refresh_token": new_refresh_token, "token_type": "bearer"}

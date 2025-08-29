@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from database.dependencies import get_session
+from database.dependencies import get_session, get_current_user
 from schemas.order_schema import OrderSchema
 from models.pedido_model import Pedido
 from models.usuario_model import Usuario
@@ -10,14 +10,14 @@ from fastapi import HTTPException
 order_router = APIRouter(prefix="/orders", tags=["orders"])
 
 @order_router.get("/")
-async def orders():
+async def orders(current_user: Usuario = Depends(get_current_user)):
     """
         Essa é uma rota padrão de pedidos do nosso sistemas, todas as rotas de pedidos precisa de autenticação
     """
     return {"mensagem": "Você acessou a rota de pedidos."}
 
 @order_router.post("/order")
-async def create_order(order_schema: OrderSchema, session: Session = Depends(get_session)):
+async def create_order(order_schema: OrderSchema, session: Session = Depends(get_session), current_user: Usuario = Depends(get_current_user)):
     """
     Essa rota cria um pedido no sistema
     """

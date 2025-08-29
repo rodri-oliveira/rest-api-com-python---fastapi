@@ -7,7 +7,7 @@ from schemas.usuario_schema import UsuarioSchema
 from sqlalchemy.orm import Session
 from schemas.login_schema import LoginSchema
 from fastapi import HTTPException
-from utils.security import verify_token
+from database.dependencies import verify_refresh_token
 
 auth_router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -43,23 +43,23 @@ async def login(login_schema: LoginSchema, session: Session = Depends(get_sessio
     if not usuario:
         raise HTTPException(status_code=401, detail="Email ou senha invalidos ou usuario não encontrado.")
     else:
-        token_data = {"sub": usuario.email}
+        token_data = {"sub": str(usuario.usuario_id)}
         acess_token = create_access_token(token_data)
         refresh_token = create_refresh_token(token_data)
         return {"access_token": acess_token, "refresh_token": refresh_token, "token_type": "bearer"}
 
 @auth_router.post("/refresh_token")
-async def refresh_token(refresh_token: str, session: Session = Depends(get_session)):
-    payload = verify_token(refresh_token)
-    if not payload or payload.get("type") != "refresh":
+async def refresh_token(payload: dict = Depends(verify_refresh_token), session: Session = Depends(get_session)):
+    user_id = payload.get("sub")
+    try:
+        user_id = int(user_id)
+    except (TypeError, ValueError):
         raise HTTPException(status_code=401, detail="Token invalido.")
-
-    email = payload.get("sub")
-    usuario = session.query(Usuario).filter(Usuario.email == email).first()
+    usuario = session.query(Usuario).filter(Usuario.usuario_id == user_id).first()
     if not usuario:
         raise HTTPException(status_code=401, detail="Email ou senha invalidos ou usuario não encontrado.")
 
-    token_data = {"sub": usuario.email}
+    token_data = {"sub": str(usuario.usuario_id)}
     acess_token = create_access_token(token_data)
     new_refresh_token = create_refresh_token(token_data)
     return {"access_token": acess_token, "refresh_token": new_refresh_token, "token_type": "bearer"}

@@ -48,7 +48,7 @@ def get_current_user(
     try:
         user_id = int(user_id)
     except (TypeError, ValueError):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token invalido.")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token invalido.", headers={"WWW-Authenticate": "Bearer"})
 
     usuario = session.query(Usuario).filter(Usuario.usuario_id == user_id).first()
     if not usuario:

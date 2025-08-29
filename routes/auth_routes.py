@@ -7,7 +7,7 @@ from schemas.usuario_schema import UsuarioSchema
 from sqlalchemy.orm import Session
 from schemas.login_schema import LoginSchema
 from fastapi import HTTPException
-from database.dependencies import verify_refresh_token
+from database.dependencies import verify_refresh_bearer
 
 auth_router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -49,7 +49,7 @@ async def login(login_schema: LoginSchema, session: Session = Depends(get_sessio
         return {"access_token": acess_token, "refresh_token": refresh_token, "token_type": "bearer"}
 
 @auth_router.post("/refresh_token")
-async def refresh_token(payload: dict = Depends(verify_refresh_token), session: Session = Depends(get_session)):
+async def refresh_token(payload: dict = Depends(verify_refresh_bearer), session: Session = Depends(get_session)):
     user_id = payload.get("sub")
     try:
         user_id = int(user_id)

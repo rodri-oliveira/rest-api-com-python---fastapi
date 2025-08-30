@@ -3,38 +3,41 @@ from database.dependencies import get_session
 from models.usuario_model import Usuario
 from services.auth_service import user_auth
 from utils.security import bcrypt_context, create_access_token, create_refresh_token
-from schemas.usuario_schema import UsuarioSchema
+from schemas.usuario_schema import UsuarioSchema, UsuarioOutSchema
 from sqlalchemy.orm import Session
 from schemas.login_schema import LoginSchema
+from schemas.token_schema import TokenResponseSchema
 from fastapi import HTTPException
 from database.dependencies import verify_refresh_bearer
+from schemas.message_schema import MessageSchema
 
 auth_router = APIRouter(prefix="/auth", tags=["auth"])
 
     
-@auth_router.get("/")
+@auth_router.get("/", response_model=MessageSchema)
 async def home():
     """
         Essa é um rota padrão de autenticação do nosso sistema
     """
-    return {"Mendagem": "Voce acessou a de autenticação.", "autenticado": False}
+    return {"mensagem": "Você acessou a rota de autenticação.", "autenticado": False}
 
-@auth_router.post("/create_acount")
-async def create_acount(usuario_schema: UsuarioSchema, session: Session = Depends(get_session)):
+@auth_router.post("/create_account", response_model=UsuarioOutSchema, status_code=201)
+async def create_account(usuario_schema: UsuarioSchema, session: Session = Depends(get_session)):
     """
     Essa rota cria uma conta no sistema
     """
     senha_criptografada = bcrypt_context.hash(usuario_schema.senha)
     usuario = session.query(Usuario).filter(Usuario.email==usuario_schema.email).first()
     if usuario:
-        return {"mensagem": "Usuario ja existe."}
+        raise HTTPException(status_code=409, detail="Usuario já existe.")
     else:
         novo_usuario = Usuario(usuario_schema.nome, usuario_schema.email, senha_criptografada, usuario_schema.ativo, usuario_schema.admin)
         session.add(novo_usuario)
         session.commit()
-        return {"mensagem": f"Usuario {usuario_schema.nome} criado com sucesso.", "email": usuario_schema.email}
+        session.refresh(novo_usuario)
+        return novo_usuario
 
-@auth_router.post("/login")
+@auth_router.post("/login", response_model=TokenResponseSchema)
 async def login(login_schema: LoginSchema, session: Session = Depends(get_session)):
     """
     Essa rota faz login no sistema
@@ -48,7 +51,7 @@ async def login(login_schema: LoginSchema, session: Session = Depends(get_sessio
         refresh_token = create_refresh_token(token_data)
         return {"access_token": acess_token, "refresh_token": refresh_token, "token_type": "bearer"}
 
-@auth_router.post("/refresh_token")
+@auth_router.post("/refresh_token", response_model=TokenResponseSchema)
 async def refresh_token(payload: dict = Depends(verify_refresh_bearer), session: Session = Depends(get_session)):
     """
     Essa rota faz refresh no token.

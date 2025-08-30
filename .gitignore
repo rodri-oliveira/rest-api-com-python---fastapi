@@ -115,3 +115,7 @@ dmypy.json
 .DS_Store
 *.db
 *.sqlite
+
+# Docs pessoais (não versionar)
+docs/guia_projeto_fastapi_modular.md
+docs/guia_geral_fastapi_modular.md

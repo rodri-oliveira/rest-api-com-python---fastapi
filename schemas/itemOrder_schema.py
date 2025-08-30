@@ -1,4 +1,4 @@
-from pydantic import BaseModel, conint, condecimal
+from pydantic import BaseModel, conint, condecimal, ConfigDict
 from typing import Annotated
 from decimal import Decimal
 
@@ -8,8 +8,7 @@ class ItemPedidoCreateSchema(BaseModel):
     quantidade: Annotated[int, conint(ge=1)]
     preco_unitario: Annotated[Decimal, condecimal(gt=0)]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class ItemPedidoOutSchema(BaseModel):
     id: int
@@ -19,5 +18,4 @@ class ItemPedidoOutSchema(BaseModel):
     preco_unitario: Decimal
     subtotal: Decimal
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

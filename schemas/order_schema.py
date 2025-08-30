@@ -1,13 +1,11 @@
-from pydantic import BaseModel, condecimal
+from pydantic import BaseModel, condecimal, ConfigDict
 from typing import Annotated
 from decimal import Decimal
 
 
 class OrderSchema(BaseModel):
     preco: Annotated[Decimal, condecimal(gt=0)]
-
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class OrderOutSchema(BaseModel):
@@ -15,6 +13,4 @@ class OrderOutSchema(BaseModel):
     status: str
     usuario_id: int
     preco: Decimal
-
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

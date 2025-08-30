@@ -33,3 +33,7 @@ starlette>=0.36
 # Requisitos auxiliares
 greenlet>=3.0
 
+# Testes e ferramentas de cliente HTTP
+httpx>=0.28
+pytest>=8.4
+

@@ -12,7 +12,7 @@ class StatusPedido(Enum):
 class Pedido(Base):
     __tablename__= "pedidos"
 
-    id = Column("id", Integer, primary_key=True, autoincrement=True)
+    pedido_id = Column("id", Integer, primary_key=True, autoincrement=True)
     status = Column("status", SqlEnum(StatusPedido))
     usuario_id = Column("usuario_id", Integer, ForeignKey("usuarios.id"))
     preco = Column("preco", Float)

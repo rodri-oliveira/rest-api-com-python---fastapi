@@ -9,6 +9,7 @@ from models.pedido_model import StatusPedido
 from models.item_pedido_model import ItensPedido
 from schemas.itemOrder_schema import ItemPedidoCreateSchema, ItemPedidoOutSchema
 from services.order_service import add_item_to_order as svc_add_item
+from services.order_service import remove_item_from_order as svc_remove_item
 
 
 order_router = APIRouter(prefix="/orders", tags=["orders"], dependencies=[Depends(get_current_user)])
@@ -49,6 +50,29 @@ async def list_orders(
         # Erro interno (DB, etc.)
         raise HTTPException(status_code=500, detail="Erro ao listar pedidos. Tente novamente mais tarde.")
     
+
+@order_router.get("/my", response_model=list[OrderOutSchema])
+async def list_my_orders(
+    session: Session = Depends(get_session),
+    current_user: Usuario = Depends(get_current_user),
+):
+    """
+    Lista todos os pedidos do usuário autenticado.
+    Retorna 404 se não houver pedidos.
+    """
+    try:
+        pedidos = (
+            session.query(Pedido)
+            .filter(Pedido.usuario_id == current_user.usuario_id)
+            .all()
+        )
+        if not pedidos:
+            raise HTTPException(status_code=404, detail="Nenhum pedido encontrado")
+        return pedidos
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=500, detail="Erro ao listar pedidos do usuário. Tente novamente mais tarde.")
 
 @order_router.post("", response_model=OrderOutSchema)
 async def create_order(order_schema: OrderSchema, session: Session = Depends(get_session), current_user: Usuario = Depends(get_current_user)):
@@ -95,6 +119,40 @@ async def delete_order(
     session.commit()
     # Retorna o pedido atualizado conforme o schema de saída
     return pedido
+
+@order_router.post("/{order_id}/finalize", response_model=OrderOutSchema)
+async def finalize_order(
+    order_id: int,
+    session: Session = Depends(get_session),
+    current_user: Usuario = Depends(get_current_user),
+):
+    """
+    Finaliza um pedido (status = ENTREGUE).
+    Permissão: admin ou dono do pedido.
+    Restrições: não permite finalizar se já estiver CANCELADO ou ENTREGUE.
+    """
+    try:
+        pedido = session.query(Pedido).filter(Pedido.pedido_id == order_id).first()
+        if not pedido:
+            raise HTTPException(status_code=404, detail="Pedido não encontrado")
+
+        # Permissão: admin ou dono
+        if not (current_user.admin or pedido.usuario_id == current_user.usuario_id):
+            raise HTTPException(status_code=403, detail="Sem permissão para finalizar este pedido")
+
+        # Restrições de estado
+        if pedido.status == StatusPedido.CANCELADO:
+            raise HTTPException(status_code=409, detail="Não é possível finalizar um pedido cancelado")
+        if pedido.status == StatusPedido.ENTREGUE:
+            raise HTTPException(status_code=409, detail="Pedido já finalizado")
+
+        pedido.status = StatusPedido.ENTREGUE
+        session.commit()
+        return pedido
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=500, detail="Erro ao finalizar pedido. Tente novamente mais tarde.")
 
 @order_router.post("/add-item/{order_id}", response_model=ItemPedidoOutSchema, status_code=201)
 async def add_item_to_order(
@@ -158,3 +216,28 @@ async def list_order_items(
         raise
     except Exception:
         raise HTTPException(status_code=500, detail="Erro ao listar itens do pedido. Tente novamente mais tarde.")
+
+@order_router.delete("/{order_id}/items/{item_id}", response_model=ItemPedidoOutSchema)
+async def remove_order_item(
+    order_id: int,
+    item_id: int,
+    session: Session = Depends(get_session),
+    current_user: Usuario = Depends(get_current_user),
+):
+    """
+    Remove um item específico de um pedido.
+    Permissão: admin ou dono do pedido.
+    Recalcula o total do pedido após remoção.
+    """
+    try:
+        removed = svc_remove_item(
+            session=session,
+            current_user=current_user,
+            order_id=order_id,
+            item_id=item_id,
+        )
+        return removed
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao remover item do pedido: {e}")

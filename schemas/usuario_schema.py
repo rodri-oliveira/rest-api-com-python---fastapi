@@ -10,3 +10,14 @@ class UsuarioSchema(BaseModel):
 
     class Config:
        from_attributes = True
+
+
+class UsuarioOutSchema(BaseModel):
+    usuario_id: int
+    nome: str
+    email: str
+    ativo: bool
+    admin: bool
+
+    class Config:
+        from_attributes = True
